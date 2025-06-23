@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Legenda Dunia Cahaya</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-image:url('Bukit.png');
+      color: #f0f0f0;
+      text-align: center;
+      padding: 20px;
+    }
+    #game, #restartBtn, #musicControls { display: none; }
+    img {
+      width: 220px;
+      height: auto;
+      border-radius: 10px;
+      margin: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #333;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+    }
+    input, select {
+      padding: 8px;
+      font-size: 16px;
+      margin: 8px;
+      color:black;
+      font-style:arial;
+      background-color:white;
+    }
+    #lives {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    
+    #h4 {
+      font-weight: bold;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Legenda Dunia Cahaya</h1>
+
+  <div id="start">
+    <p>Masukkan nama karaktermu:</p>
+    <input type="text" id="playerName" placeholder="Contoh: akmal,talash,balmond" /><br/>
+    <label for="playerGender">Pilih gender:</label>
+    <select id="playerGender">
+      <option value="Laki-laki">Laki-laki</option>
+      <option value="Perempuan">Perempuan</option>
+    </select><br/>
+    <label for="playerClass">Pilih class:</label>
+    <select id="playerClass">
+      <option value="Ksatria">Ksatria</option>
+      <option value="Penyihir">Penyihir</option>
+      <option value="Pemburu">Pemburu</option>
+    </select><br/>
+    <button onclick="startGame()">Play</button>
+  </div>
+
+  <div id="game">
+    <h2 id="storyTitle"></h2>
+    <img id="characterImg" src="" alt="Karakter"/>
+    <p id="storyText"></p>
+    <div id="choices"></div>
+    <p id="lives">❤️ Nyawa: 3</p>
+  </div>
+
+  <div id="musicControls">
+    <button onclick="toggleMusic()" id="musicBtn">🔊 Putar Musik</button>
+  </div>
+  
+<h4>DEV SYID</h4>
+
+  <button id="restartBtn" onclick="restartGame()">Restart</button>
+
+  <audio id="bgMusic" loop>
+    <source src="music.mp3" type="audio/mp3">
+    Browser kamu tidak mendukung audio.
+  </audio>
+
+  <script>
+    let playerName = "", gender = "", playerClass = "", currentScene = "start";
+    let lives = 3;
+    let musicPlaying = false;
+
+    const storyData = {
+      start: {
+        title: "Awal Takdir",
+        text: () => `Selamat datang, ${playerName}, sang ${playerClass} ${gender}. Takdir menunggumu di tanah yang penuh kegelapan dan harapan. Di depanmu ada dua jalur: lembah kabut dan jembatan kristal.`,
+        img: "kastil.png",
+        choices: [
+          { text: "Lembah Kabut", next: "fogValley" },
+          { text: "Jembatan Kristal", next: "crystalBridge" }
+        ]
+      },
+      fogValley: {
+        title: "Lembah Kabut",
+        text: () => `Kabut tebal menyelimuti pandangan. Makhluk bayangan menyerang dari kegelapan.`,
+        img: "lembah kabut.png",
+        choices: [
+          { text: "Lawan bayangan", next: "shadowFight" },
+          { text: "Kabur", next: "escapeFog" }
+        ]
+      },
+      crystalBridge: {
+        title: "Jembatan Kristal",
+        text: () => `Kamu menyeberangi jembatan berkilau, namun naga es muncul!` ,
+        img: "naga es.png",
+        choices: [
+          { text: "Gunakan kekuatan sihir", next: "magicFight" },
+          { text: "Serang dengan pedang", next: "swordFight" }
+        ]
+      },
+      shadowFight: {
+        title: "Pertarungan Bayangan",
+        text: () => `Bayangan terlalu cepat! Kamu terjatuh dan kehilangan nyawa.`,
+        img: "mati bayangan.png",
+        choices: [
+          { text: "Bangkit lagi", next: "fogValley" }
+        ],
+        loseLife: true
+      },
+      escapeFog: {
+        title: "Kembali ke Awal",
+        text: () => `Kamu selamat tapi melewatkan kesempatan untuk mendapat senjata cahaya.`,
+        img: "pedang.png",
+        choices: [
+          { text: "Ke Jembatan Kristal", next: "crystalBridge" }
+        ]
+      },
+      magicFight: {
+        title: "Sihir yang Menyelamatkan",
+        text: () => `Sihirmu meledak dan melumpuhkan naga! Kamu mendapatkan batu kristal kekuatan.`,
+        img: "naga mati.png",
+        choices: [
+          { text: "Masuki gerbang kuno", next: "ancientGate" }
+        ]
+      },
+      swordFight: {
+        title: "Kekalahan Memalukan",
+        text: () => `Seranganmu gagal dan naga membekukanmu. Kamu terluka parah.`,
+        img: "sembur es.png",
+        choices: [
+          { text: "Coba lagi", next: "crystalBridge" }
+        ],
+        loseLife: true
+      },
+      ancientGate: {
+        title: "Gerbang Kuno",
+        text: () => `Kamu tiba di gerbang yang mengarah ke kerajaan kegelapan. Di baliknya ada sang Raja Kegelapan.`,
+        img: "gerbang.png",
+        choices: [
+          { text: "Masuki kastil", next: "finalBoss" }
+        ]
+      },
+      finalBoss: {
+        title: "Pertarungan Terakhir",
+        text: () => `Raja Kegelapan berdiri dengan armor api. Ini pertarungan akhir.`,
+        img: "raja api.png",
+        choices: [
+          { text: "Gunakan kristal sihir", next: "goodEnding" },
+          { text: "Serang langsung", next: "badEnding" }
+        ]
+      },
+      goodEnding: {
+        title: "Kemenangan Terang",
+        text: () => `${playerName} menggunakan kristal sihir dan mengalahkan kegelapan. Dunia selamat.`,
+        img: "good ending.png",
+        choices: []
+      },
+      badEnding: {
+        title: "Kekalahan Akhir",
+        text: () => `Raja Kegelapan menghancurkanmu. Dunia jatuh ke dalam kekacauan.`,
+        img: "mati raja.png",
+        choices: [],
+        loseLife: true
+      }
+    };
+
+    function startGame() {
+      playerName = document.getElementById("playerName").value || "Pahlawan";
+      gender = document.getElementById("playerGender").value;
+      playerClass = document.getElementById("playerClass").value;
+      document.getElementById("start").style.display = "none";
+      document.getElementById("game").style.display = "block";
+      document.getElementById("musicControls").style.display = "block";
+      lives = 3;
+      updateLives();
+      showScene("start");
+    }
+
+    function showScene(key) {
+      currentScene = key;
+      const scene = storyData[key];
+      document.getElementById("storyTitle").innerText = scene.title;
+      document.getElementById("storyText").innerText = scene.text();
+      document.getElementById("characterImg").src = scene.img;
+      const choicesDiv = document.getElementById("choices");
+      choicesDiv.innerHTML = "";
+
+      if (scene.loseLife) {
+        lives--;
+        updateLives();
+        if (lives <= 0) return gameOver();
+      }
+
+      if (scene.choices.length === 0) {
+        document.getElementById("restartBtn").style.display = "block";
+      }
+
+      scene.choices.forEach(choice => {
+        const btn = document.createElement("button");
+        btn.innerText = choice.text;
+        btn.onclick = () => showScene(choice.next);
+        choicesDiv.appendChild(btn);
+      });
+    }
+
+    function updateLives() {
+      document.getElementById("lives").innerText = `❤️ Nyawa: ${lives}`;
+    }
+
+    function gameOver() {
+      document.getElementById("storyTitle").innerText = "GAME OVER";
+      document.getElementById("storyText").innerText = `${playerName} gagal menyelamatkan dunia. Takdir tertutup.`;
+      document.getElementById("characterImg").src = "https://i.imgur.com/hm1RfZb.png";
+      document.getElementById("choices").innerHTML = "";
+      document.getElementById("restartBtn").style.display = "block";
+    }
+
+    function restartGame() {
+      location.reload();
+    }
+
+    function toggleMusic() {
+      const music = document.getElementById("bgMusic");
+      const btn = document.getElementById("musicBtn");
+      if (!musicPlaying) {
+        music.play();
+        musicPlaying = true;
+        btn.innerText = "🔇 Pause Musik";
+      } else {
+        music.pause();
+        musicPlaying = false;
+        btn.innerText = "🔊 Putar Musik";
+      }
+    }
+  </script>
+</body>
+</html>
